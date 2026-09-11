@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Interaction tests — myportfolioos.com</title>
+<meta name="robots" content="noindex">
+<style>
+  :root { color-scheme: light; }
+  body { margin: 0; padding: 28px; background: #f7f5f1; color: #1c1a17;
+         font-family: 'IBM Plex Mono', ui-monospace, Menlo, monospace; font-size: 13px; }
+  h1 { font-size: 17px; margin: 0 0 4px; }
+  .sub { color: #8a837a; margin: 0 0 22px; }
+  #summary { font-size: 15px; font-weight: 600; padding: 12px 14px; border-radius: 8px;
+             margin: 0 0 18px; border: 1px solid #e4e0d8; background: #fbfaf7; }
+  #summary.pass { border-color: #1a7f4b; color: #1a7f4b; }
+  #summary.fail { border-color: #b3261e; color: #b3261e; }
+  ol { margin: 0; padding-left: 26px; }
+  li { padding: 3px 0; line-height: 1.5; }
+  li.ok::marker { color: #1a7f4b; }
+  li.bad { color: #b3261e; font-weight: 500; }
+  li.bad::marker { color: #b3261e; }
+  .group { margin: 20px 0 8px; font-weight: 600; letter-spacing: 0.04em;
+           text-transform: uppercase; font-size: 11px; color: #c75000; }
+  #mframe { width: 390px; height: 844px; }
+  #sframe { width: 1280px; height: 720px; }
+  #dframe { width: 1440px; height: 900px; }
+  #tframe { width: 1440px; height: 1200px; }
+  iframe { width: 1440px; height: 900px; border: 1px solid #e4e0d8; border-radius: 8px;
+           margin-top: 24px; background: #fff; max-width: 100%; }
+  .note { margin-top: 22px; padding: 12px 14px; border: 1px dashed #d8d3c9;
+          border-radius: 8px; color: #5d574e; line-height: 1.6; }
+</style>
+</head>
+<body>
+
+<h1>Interaction tests</h1>
+<p class="sub">Drives the real index.html in the frame below. Serve first: <code>python3 test_site.py --serve</code></p>
+
+<div id="summary">running…</div>
+<ol id="results"></ol>
+
+<div class="note">
+  <strong>What this cannot check:</strong> how it actually looks. Open
+  <code>http://localhost:8000/</code> directly and resize the window past 900px and 560px.
+  These tests assert behaviour, not design.
+</div>
+
+<iframe id="frame" src="index.html" title="Landing page under test" width="1440" height="900"></iframe>
+<iframe id="mframe" src="index.html" title="Landing page at 390px" width="390" height="844"></iframe>
+<iframe id="sframe" src="index.html" title="Landing page at 1280x720" width="1280" height="720"></iframe>
+<iframe id="dframe" src="index.html#q-trust" title="Deep link at 1440x900" width="1440" height="900"></iframe>
+<iframe id="tframe" src="index.html" title="Landing page at 1440x1200" width="1440" height="1200"></iframe>
+
+<script>
+(function () {
+  var results = document.getElementById("results");
+  var summary = document.getElementById("summary");
+  var ran = 0, bad = 0;
+
+  function group(name) {
+    var li = document.createElement("div");
+    li.className = "group";
+    li.textContent = name;
+    results.appendChild(li);
+  }
+
+  function check(label, got, want) {
+    if (want === undefined) want = true;
+    ran++;
+    var ok = got === want;
+    if (!ok) bad++;
+    var li = document.createElement("li");
+    li.className = ok ? "ok" : "bad";
+    li.textContent = label + (ok ? "" : "  → got " + JSON.stringify(got));
+    results.appendChild(li);
+  }
+
+  function done() {
+    summary.textContent = (ran - bad) + "/" + ran + " passed";
+    summary.className = bad ? "fail" : "pass";
+  }
+
+  function fail(msg) {
+    summary.textContent = msg;
+    summary.className = "fail";
+  }
+
+  /* ------------------------------------------------------------------ 390px
+   * A string match on "max-width: 900px" was green while the phone layout was
+   * completely broken: .stage kept `flex: 1 1 0` from the desktop rule, collapsed
+   * to 0px once .screen stopped being a fixed-height flex column, and every child
+   * painted on top of the section below. Measure the box, never the stylesheet. */
+  function narrow() {
+    group("390px — measured, not asserted from CSS");
+    var f = document.getElementById("mframe");
+    var d = f.contentDocument, w = f.contentWindow;
+    var de = d.documentElement;
+    var stage = d.querySelector(".stage");
+    var product = d.querySelector(".product");
+    var sh = stage.getBoundingClientRect();
+
+    check("the stage has real height (it collapsed to 0 on 2026-09-11)",
+          Math.round(sh.height) > 400);
+    check("the stage is not flex-basis 0 here",
+          w.getComputedStyle(stage).flexGrow, "0");
+    check("the Portfolio OS section starts below the stage, not on top of it",
+          product.getBoundingClientRect().top >= sh.bottom - 2);
+    check("the page does not scroll sideways", de.scrollWidth <= de.clientWidth + 1);
+    check("the screen lock is released", w.getComputedStyle(d.querySelector(".screen")).overflow, "visible");
+    check("the rail stacks above the panel",
+          d.querySelector(".rail").getBoundingClientRect().bottom
+            <= d.querySelector(".panel").getBoundingClientRect().top + 2);
+    check("the résumé link is reachable", d.querySelector(".resume").getBoundingClientRect().height > 20);
+    short();
+  }
+
+  /* ----------------------------------------------------------------- 1280x720
+   * The commonest laptop. The bottom two cards clipped here while 1440x900 was fine. */
+  function short() {
+    group("1280x720 — the common laptop");
+    var f = document.getElementById("sframe");
+    var d = f.contentDocument;
+    var de = d.documentElement;
+    var tr = d.querySelector(".transcript");
+    var cards = d.querySelectorAll(".ask");
+
+    check("the page still fits one viewport",
+          d.querySelector(".screen").scrollHeight <= d.querySelector(".screen").clientHeight + 2);
+    check("all three cards render", cards.length, 3);
+    check("no card is clipped by the transcript",
+          Array.prototype.every.call(cards, function (b) {
+            return b.getBoundingClientRect().bottom <= tr.getBoundingClientRect().bottom + 1;
+          }));
+    check("the last card is fully visible",
+          cards[cards.length - 1].getBoundingClientRect().bottom <= de.clientHeight);
+    check("the résumé link is still visible",
+          d.querySelector(".resume").getBoundingClientRect().bottom <= de.clientHeight + 2);
+    var rs2 = d.querySelector(".rail-scroll");
+    check("the rail still does not scroll at 1280x720",
+          rs2.scrollHeight <= rs2.clientHeight + 1);
+    check("Education is still visible at 1280x720",
+          d.querySelector(".edu").getBoundingClientRect().bottom
+            <= rs2.getBoundingClientRect().bottom + 1);
+    deep();
+  }
+
+  /* -------------------------------------------------------------- deep link
+   * The link Yehudi pastes into an email. Moving #log below the card grid left this
+   * showing 56px of a 430px answer, sliced mid-glyph by the composer, because the
+   * deep-link path suppressed the scroll along with the focus. */
+  /* Wait for the scroll to SETTLE before measuring. These assertions check the result
+   * of a smooth scroll; sampling on a fixed timeout made the suite report 71/73 under
+   * normal motion and 73/73 with --force-prefers-reduced-motion, on identical code.
+   * A harness that shows red on a clean tree is a harness you stop reading. */
+  function whenSettled(win, el, cb) {
+    var last = -1, stable = 0, frames = 0, moved = false;
+    (function tick() {
+      // `moved` matters: from a cold start scrollTop is 0 and "3 stable frames" is
+      // satisfied instantly, before the scroll has begun. Wait for it to leave 0 first.
+      if (el.scrollTop > 0) moved = true;
+      if (el.scrollTop === last) stable++; else { stable = 0; last = el.scrollTop; }
+      if ((moved && stable >= 3) || ++frames > 300) return cb();
+      win.setTimeout(tick, 16);   // NOT win.requestAnimationFrame — detaching it from
+                                  // its window throws "Illegal invocation" and hangs the suite.
+    })();
+  }
+
+  function deep() {
+    var f = document.getElementById("dframe");
+    var d = f.contentDocument;
+    var tr = d.querySelector(".transcript");
+    whenSettled(f.contentWindow, tr, function () { deepAssert(f, d, tr); });
+  }
+
+  function deepAssert(f, d, tr) {
+    group("Deep link /#q-trust actually lands on the answer");
+    var ai = d.querySelector(".turn.ai");
+
+    check("the answer was opened from the hash", !!ai);
+    if (!ai) { done(); return; }
+
+    var band = tr.getBoundingClientRect();
+    var box = ai.getBoundingClientRect();
+    var visible = Math.min(box.bottom, band.bottom) - Math.max(box.top, band.top);
+
+    check("the transcript scrolled rather than staying at the top", tr.scrollTop > 50);
+    // scrollIntoView() moves every scrollable ancestor. It pushed the header off the
+    // page and revealed the Portfolio OS section on a link that should not move the page.
+    check("the PAGE did not scroll — the masthead is still on screen",
+          f.contentWindow.scrollY, 0);
+    check("the header is still visible",
+          d.querySelector(".site-header").getBoundingClientRect().top >= -2);
+    check("the answer starts inside the visible band", box.top >= band.top - 2);
+    check("most of the answer is actually readable (was 56px of 430px)",
+          visible > Math.min(box.height, band.height) * 0.8);
+    check("it is the right answer",
+          /relevance, reliability, and observability/i.test(d.getElementById("log").textContent));
+    check("arriving by link does NOT steal focus from the page",
+          d.activeElement === d.body || d.activeElement === d.documentElement);
+    done();
+  }
+
+  var frame = document.getElementById("frame");
+
+  frame.addEventListener("load", function () {
+    var win, doc;
+    try {
+      win = frame.contentWindow;
+      doc = win.document;
+    } catch (e) {
+      fail("Cannot reach the frame — open this over http, not file://");
+      return;
+    }
+
+    if (!win.__site) {
+      fail("site.js did not initialise (window.__site is missing)");
+      return;
+    }
+
+    var S = win.__site;
+    var log = doc.getElementById("log");
+    var grid = doc.querySelector(".qa-grid");
+    var resetBtn = doc.getElementById("reset");
+
+    /* ---------------------------------------------------- enhancement */
+    group("Progressive enhancement");
+    check("site.js exposed its test surface", !!S);
+    check("three questions were lifted out of the markup", S.questions.length, 3);
+    check("the card grid replaced the plain Q&A list", !!grid);
+    check("three cards rendered", grid ? grid.querySelectorAll(".ask").length : 0, 3);
+    check("the raw .qa-item blocks are gone after enhancement",
+          doc.querySelectorAll(".qa-item").length, 0);
+    check("every card is a real <button> (keyboard reachable)",
+          grid ? Array.prototype.every.call(grid.querySelectorAll(".ask"),
+                function (b) { return b.tagName === "BUTTON" && b.type === "button"; }) : false);
+    check("every card has a visible label",
+          grid ? Array.prototype.every.call(grid.querySelectorAll(".ask"),
+                function (b) { return b.textContent.trim().length > 8; }) : false);
+
+    /* ---------------------------------------------------- viewport fit */
+    group("Fits one viewport (meddahabdallah.pro model)");
+    var screenEl = doc.querySelector(".screen");
+    var de = doc.documentElement;
+    check("the .screen wrapper exists", !!screenEl);
+    check("the first screen does not scroll the page at 1440x900",
+          screenEl.scrollHeight <= screenEl.clientHeight + 2);
+    check("the screen is exactly the viewport height",
+          Math.abs(screenEl.getBoundingClientRect().height - de.clientHeight) <= 2);
+    check("nothing overflows horizontally", de.scrollWidth <= de.clientWidth + 1);
+
+    // Removed 2026-09-11. Asserted absent so neither creeps back.
+    check("there is no composer note", !doc.getElementById("composer"));
+    check("there is no disclaimer line", !doc.querySelector(".disclaimer"));
+    check("there is no phone number", !doc.querySelector('a[href^="tel:"]'));
+    var foot = doc.querySelector(".panel-foot");
+    check("the panel has a designed bottom edge", !!foot);
+    check("and it sits flush on the viewport edge",
+          Math.abs(foot.getBoundingClientRect().bottom - de.clientHeight) <= 2);
+    check("the first screen offers a route to the Portfolio OS section",
+          !!doc.querySelector('.screen a[href="#portfolio-os"]'));
+    check("the untouched panel is centred, not top-pinned above a void",
+          doc.getElementById("transcript").classList.contains("is-empty"));
+
+    /* EMPTY-STATE GEOMETRY. On 2026-09-11 a stretched-card layout was added and then
+       removed an hour later, and BOTH suites stayed green through the whole thing —
+       nothing asserted a card height or a grid height, so a feature could vanish
+       silently. These lock the intended shape: natural-height cards in a centred block.
+       If the stretch is ever restored, the band is what needs editing, deliberately. */
+    var cards = doc.querySelectorAll(".ask");
+    var h0 = cards[0].getBoundingClientRect().height;
+    check("cards are natural height, not stretched to fill (40-90px at 1440x900)",
+          h0 >= 40 && h0 <= 90);
+    check("every card is at least a 24px target",
+          Array.prototype.every.call(cards, function (b) {
+            return b.getBoundingClientRect().height >= 24;
+          }));
+
+    var tr = doc.getElementById("transcript");
+    var trBox = tr.getBoundingClientRect();
+    var kicker = doc.querySelector("#qa .kicker").getBoundingClientRect();
+    /* His ruling 2026-09-11: intro bubble removed, questions at the top of the panel.
+       Measured against the transcript's own padding rather than a literal. The first
+       version used `<= 40` and measured exactly 40 — padding 34px plus the section's 6px
+       margin — so any future padding tweak would have failed the build spuriously and read
+       as a real regression. */
+    var trPadTop = parseFloat(win.getComputedStyle(tr).paddingTop);
+    check("the questions start at the top of the panel",
+          kicker.top - trBox.top <= trPadTop + 16);
+    check("no intro bubble", !doc.querySelector(".msg.intro"));
+    check("nothing sits above the questions",
+          doc.querySelector("#qa").previousElementSibling, null);
+
+    /* 1440x900 is where the empty-state void is SMALLEST. Guarding it only here reads as
+       coverage it is not: at 1440x1200 the same void is roughly double. Re-run the two
+       assertions that care about it at the height that actually stresses them. */
+    var tall = document.getElementById("tframe");
+    var td = tall.contentDocument;
+    var ttr = td.getElementById("transcript");
+    var tbox = ttr.getBoundingClientRect();
+    var tKick = td.querySelector("#qa .kicker").getBoundingClientRect();
+    var tPadTop = parseFloat(tall.contentWindow.getComputedStyle(ttr).paddingTop);
+    check("at 1440x1200 the questions are still at the top, not floating mid-panel",
+          tKick.top - tbox.top <= tPadTop + 16);
+    // His ruling 2026-09-11: tagline pinned top, Education pinned bottom, at every height.
+    check("at 1440x1200 the rail still pins top and bottom rather than centring",
+          tall.contentWindow.getComputedStyle(td.querySelector(".rail-scroll")).justifyContent,
+          "space-between");
+    var tRail = td.querySelector(".rail-scroll").getBoundingClientRect();
+    var tKids = td.querySelectorAll(".rail-scroll > *");
+    check("the tagline sits at the top edge of the rail",
+          tKids[0].getBoundingClientRect().top - tRail.top <= 34);
+    check("Education sits at the bottom edge of the rail",
+          tRail.bottom - tKids[tKids.length - 1].getBoundingClientRect().bottom <= 26);
+    check("at 1440x1200 the rail still does not scroll",
+          td.querySelector(".rail-scroll").scrollHeight
+            <= td.querySelector(".rail-scroll").clientHeight + 1);
+    check("the h1 is not smaller than the card labels",
+          parseFloat(win.getComputedStyle(doc.querySelector(".lede")).fontSize)
+            >= parseFloat(win.getComputedStyle(doc.querySelector(".ask")).fontSize));
+    check("all three cards are visible without scrolling",
+          Array.prototype.every.call(doc.querySelectorAll(".ask"), function (b) {
+            return b.getBoundingClientRect().bottom <= de.clientHeight;
+          }));
+    // His instruction 2026-09-11: the whole rail must fit, education visible, no scrolling.
+    var rs = doc.querySelector(".rail-scroll");
+    check("the rail does not scroll at 1440x900",
+          rs.scrollHeight <= rs.clientHeight + 1);
+    check("Education is visible without scrolling",
+          doc.querySelector(".edu").getBoundingClientRect().bottom
+            <= rs.getBoundingClientRect().bottom + 1);
+
+    var resume = doc.querySelector(".resume");
+    check("the résumé link is pinned outside the content region",
+          resume.parentElement.classList.contains("rail"));
+    check("and is visible", resume.getBoundingClientRect().bottom <= de.clientHeight + 2);
+    check("the transcript scrolls inside itself",
+          win.getComputedStyle(doc.querySelector(".transcript")).overflowY, "auto");
+
+    /* ---------------------------------------------------- initial state */
+    group("Initial state");
+    check("the transcript starts empty", log.children.length, 0);
+    check("the reset button starts hidden", resetBtn.hidden, true);
+    check("the log announces politely",
+          log.getAttribute("aria-live"), "polite");
+    check("there is no chat input in v1", doc.querySelectorAll("textarea").length, 0);
+
+    /* ---------------------------------------------------- asking */
+    group("Asking a question");
+    var first = grid.querySelector(".ask");
+    var firstId = first.dataset.id;
+    var firstLabel = first.textContent.replace("↗", "").trim();
+
+    first.click();
+
+    win.setTimeout(function () {
+      check("two turns appended — the question and the answer", log.children.length, 2);
+      check("the first turn is attributed to You",
+            log.children[0].querySelector(".who").textContent.trim(), "You");
+      check("the question text matches the card",
+            log.children[0].querySelector(".bubble").textContent.trim(), firstLabel);
+      // First person throughout: the heading says "How I Build AI Products" and every
+      // answer is his own writing, so nothing on the page speaks about him in third person.
+      check("the answer is attributed to Yehudi, not to an agent",
+            log.children[1].querySelector(".who").textContent.trim(), "Yehudi");
+      check("the answer rendered as real paragraphs",
+            log.children[1].querySelectorAll("p").length >= 2);
+      check("the answer is substantive",
+            log.children[1].textContent.trim().length > 250);
+      check("the reset button appeared", resetBtn.hidden, false);
+      check("centring is dropped once there is a conversation",
+            doc.getElementById("transcript").classList.contains("is-empty"), false);
+      check("the asked card is disabled", first.disabled, true);
+      check("and is marked disabled for screen readers",
+            first.getAttribute("aria-disabled"), "true");
+      check("the URL now deep-links to that answer",
+            win.location.hash, "#" + firstId);
+      check("the card grid is still in the scroll viewport after answering",
+            grid.getBoundingClientRect().top < doc.querySelector(".transcript").getBoundingClientRect().bottom);
+      check("answers append below the grid, not above it",
+            grid.compareDocumentPosition(log) & Node.DOCUMENT_POSITION_FOLLOWING ? true : false);
+
+      /* ------------------------------------------------- no double-ask */
+      group("Guards");
+      first.click();
+      win.setTimeout(function () {
+        check("clicking an answered card again changes nothing", log.children.length, 2);
+
+        var second = grid.querySelectorAll(".ask")[1];
+        second.click();
+        win.setTimeout(function () {
+          check("a second question appends two more turns", log.children.length, 4);
+          check("both questions are recorded", S.asked().length, 2);
+
+          /* --------------------------------------------- reset */
+          group("New chat");
+          resetBtn.click();
+          win.setTimeout(function () {
+            check("the transcript is cleared", log.children.length, 0);
+            check("the reset button hides again", resetBtn.hidden, true);
+            check("every card is re-enabled",
+                  Array.prototype.every.call(grid.querySelectorAll(".ask"),
+                        function (b) { return b.disabled === false; }));
+            check("the asked list is empty", S.asked().length, 0);
+            check("centring is restored on New chat",
+                  doc.getElementById("transcript").classList.contains("is-empty"));
+            check("the hash is cleared", win.location.hash, "");
+            check("focus moved back to the first card",
+                  doc.activeElement === grid.querySelector(".ask"));
+
+            /* ------------------------------------------- deep link */
+            group("Deep linking");
+            S.ask("q-trust", { scroll: false, focus: false }).then(function () {
+              win.setTimeout(function () {
+                check("asking by id works", log.children.length, 2);
+                check("it answered the right question",
+                      /trust and adoption/i.test(log.children[0].textContent));
+                check("an unknown id is ignored rather than throwing",
+                      typeof S.ask === "function");
+                S.ask("q-does-not-exist", { scroll: false, focus: false }).then(function (r) {
+                  check("an unknown id returns false", r, false);
+                  check("and appends nothing", log.children.length, 2);
+                  narrow();
+                });
+              }, 30);
+            });
+          }, 30);
+        }, 30);
+      }, 30);
+    }, 40);
+  });
+})();
+</script>
+</body>
+</html>
