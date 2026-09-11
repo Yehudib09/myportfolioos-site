@@ -1,0 +1,5 @@
+# myportfolioos.com
+User-agent: *
+Allow: /
+
+Sitemap: https://myportfolioos.com/sitemap.xml

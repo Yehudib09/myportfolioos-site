@@ -303,6 +303,25 @@ def main():
     check("CNAME still points at the apex domain", (read("CNAME") or "").strip(),
           "myportfolioos.com")
 
+    # The page was live and absent from Google's index; these are what a crawler looks for.
+    robots = read("robots.txt") or ""
+    check("robots.txt exists", bool(robots))
+    check("it does not disallow the site", "Disallow: /" in robots, False)
+    check("and points at the sitemap", "Sitemap: https://myportfolioos.com/sitemap.xml" in robots)
+    sitemap = read("sitemap.xml") or ""
+    check("sitemap.xml exists", bool(sitemap))
+    if sitemap:
+        import xml.dom.minidom
+        try:
+            xml.dom.minidom.parseString(sitemap)
+            check("the sitemap is valid XML", True)
+        except Exception as e:
+            check(f"the sitemap is valid XML ({e})", False)
+        check("it lists the home page", "<loc>https://myportfolioos.com/</loc>" in sitemap)
+        check("it lists the essay",
+              "prices-fell-evidence-didnt.html</loc>" in sitemap)
+    check("nothing on the page asks not to be indexed", "noindex" in index, False)
+
     # ---------------------------------------------------------------- 7. secrets
     print("\nNO SECRET IN ANYTHING THAT SHIPS\n")
     for name in ("index.html", "site.js", "landing.css", "style.css"):
