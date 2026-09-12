@@ -172,6 +172,15 @@ def main():
     check("the header does not shrink", ".site-header { flex: none; }" in (css or ""))
     check("the stage takes the remaining height", "flex: 1 1 0" in (css or ""))
     check("the rail has its own content region", 'class="rail-scroll"' in index)
+    # 2026-09-12: the "AI Product" chip left the header and became three pills under the
+    # tagline, where they qualify the positioning statement rather than the masthead.
+    check("three pills under the tagline", index.count('<li>AI Strategy</li>')
+          + index.count('<li>B2B SaaS</li>') + index.count('<li>GTM</li>'), 3)
+    check("the pills sit directly after the tagline",
+          bool(re.search(r'</h1>\s*\n\s*<ul class="tags">', index)))
+    check("no chip left in the header", 'class="chip"' in index, False)
+    check("and no dead .chip rule in the stylesheet",
+          bool(re.search(r"^\.chip \{", css or "", re.M)), False)
     # 2026-09-11, his instruction: "make the whole resume section on the left fit inside
     # the panel. i should be able to see education without scrolling." tests.html measures
     # that it actually fits at 1440x900, 1366x768 and 1280x720.
@@ -183,8 +192,20 @@ def main():
           bool(re.search(r'</div>\s*\n\s*<a class="resume"', index)))
     check("the decorative rules are gone (they cost 40px of rail height)",
           "<hr>" in index, False)
-    check("short laptops get their own rhythm (1280x720 clipped two cards)",
-          "@media (max-height: 800px)" in (css or ""))
+    # Tiers are cut against VIEWPORT height, not screen size: a 1440x900 display gives the
+    # page ~812px in Chrome. 890 covers that; 700 covers 1366x768 (~681) and 1280x720 (~633).
+    check("the compact tier covers a real 1440x900 viewport (~812px)",
+          "@media (max-height: 890px)" in (css or ""))
+    check("a third tier covers real 1366x768 and 1280x720 viewports",
+          "@media (max-height: 700px)" in (css or ""))
+    # The floor that stops the pills from collapsing the timeline. tests.html measures the
+    # rendered gap; this only guards the declaration from being edited back down.
+    check("the short-tier role gap declares a 12px floor",
+          ".timeline { gap: 12px;" in (css or ""))
+    # Spare height must reach the section boundaries before the timeline spreads into it.
+    check("the timeline stops claiming spare height before the boundaries do",
+          ".block.grow .timeline { flex: 0 0 auto; justify-content: flex-start; }"
+          in (css or ""))
     # Removed by Yehudi on 2026-09-11: the phone number, the composer note and the
     # disclaimer line. Asserted as ABSENT so none of them creeps back.
     check("no phone number on a page that ranks for his name", "tel:" in index, False)

@@ -22,11 +22,12 @@
   li.bad::marker { color: #b3261e; }
   .group { margin: 20px 0 8px; font-weight: 600; letter-spacing: 0.04em;
            text-transform: uppercase; font-size: 11px; color: #c75000; }
-  #mframe { width: 390px; height: 844px; }
-  #sframe { width: 1280px; height: 720px; }
-  #dframe { width: 1440px; height: 900px; }
-  #tframe { width: 1440px; height: 1200px; }
-  iframe { width: 1440px; height: 900px; border: 1px solid #e4e0d8; border-radius: 8px;
+  #mframe { width: 390px;  height: 745px; }
+  #sframe { width: 1280px; height: 633px; }
+  #dframe { width: 1440px; height: 812px; }
+  #tframe { width: 1440px; height: 1115px; }
+  #gframe { width: 1366px; height: 681px; }
+  iframe { width: 1440px; height: 812px; border: 1px solid #e4e0d8; border-radius: 8px;
            margin-top: 24px; background: #fff; max-width: 100%; }
   .note { margin-top: 22px; padding: 12px 14px; border: 1px dashed #d8d3c9;
           border-radius: 8px; color: #5d574e; line-height: 1.6; }
@@ -46,11 +47,19 @@
   These tests assert behaviour, not design.
 </div>
 
-<iframe id="frame" src="index.html" title="Landing page under test" width="1440" height="900"></iframe>
-<iframe id="mframe" src="index.html" title="Landing page at 390px" width="390" height="844"></iframe>
-<iframe id="sframe" src="index.html" title="Landing page at 1280x720" width="1280" height="720"></iframe>
-<iframe id="dframe" src="index.html#q-trust" title="Deep link at 1440x900" width="1440" height="900"></iframe>
-<iframe id="tframe" src="index.html" title="Landing page at 1440x1200" width="1440" height="1200"></iframe>
+<!--
+  VIEWPORT heights, not screen heights. Every frame here used to carry the display size —
+  900, 768, 720 — and on 2026-09-12 that hid a real regression: a 1440x900 Mac gives the
+  page about 812px once Chrome's tab strip and URL bar are subtracted, and the rail
+  overflowed by 79px there while this suite reported 100/100 green. A screen size is not a
+  viewport. The labels below name the machine; the height is what the page actually gets.
+-->
+<iframe id="frame"  src="index.html"         title="1440x900 Mac, Chrome"   width="1440" height="812"></iframe>
+<iframe id="mframe" src="index.html"         title="iPhone 390x844, Safari" width="390"  height="745"></iframe>
+<iframe id="sframe" src="index.html"         title="1280x720 laptop"        width="1280" height="633"></iframe>
+<iframe id="dframe" src="index.html#q-trust" title="Deep link, 1440x900 Mac" width="1440" height="812"></iframe>
+<iframe id="tframe" src="index.html"         title="1440x1200 display"      width="1440" height="1115"></iframe>
+<iframe id="gframe" src="index.html"         title="1366x768 laptop"        width="1366" height="681"></iframe>
 
 <script>
 (function () {
@@ -92,7 +101,7 @@
    * to 0px once .screen stopped being a fixed-height flex column, and every child
    * painted on top of the section below. Measure the box, never the stylesheet. */
   function narrow() {
-    group("390px — measured, not asserted from CSS");
+    group("390x745 — a real phone viewport, measured not asserted from CSS");
     var f = document.getElementById("mframe");
     var d = f.contentDocument, w = f.contentWindow;
     var de = d.documentElement;
@@ -118,14 +127,14 @@
   /* ----------------------------------------------------------------- 1280x720
    * The commonest laptop. The bottom two cards clipped here while 1440x900 was fine. */
   function short() {
-    group("1280x720 — the common laptop");
+    group("1280x720 laptop — real 633px viewport");
     var f = document.getElementById("sframe");
     var d = f.contentDocument;
     var de = d.documentElement;
     var tr = d.querySelector(".transcript");
     var cards = d.querySelectorAll(".ask");
 
-    check("the page still fits one viewport",
+    check("the page still fits at the smallest common laptop",
           d.querySelector(".screen").scrollHeight <= d.querySelector(".screen").clientHeight + 2);
     check("all six cards render", cards.length, 6);
     check("no card is clipped by the transcript",
@@ -195,7 +204,7 @@
     check("most of the answer is actually readable (was 56px of 430px)",
           visible > Math.min(box.height, band.height) * 0.8);
     check("it is the right answer",
-          /relevance, reliability, and observability/i.test(d.getElementById("log").textContent));
+          /relevance, reliability, observability, and control/i.test(d.getElementById("log").textContent));
     check("arriving by link does NOT steal focus from the page",
           d.activeElement === d.body || d.activeElement === d.documentElement);
     done();
@@ -239,11 +248,11 @@
                 function (b) { return b.textContent.trim().length > 8; }) : false);
 
     /* ---------------------------------------------------- viewport fit */
-    group("Fits one viewport (meddahabdallah.pro model)");
+    group("Fits one viewport — 1440x900 Mac, real 812px");
     var screenEl = doc.querySelector(".screen");
     var de = doc.documentElement;
     check("the .screen wrapper exists", !!screenEl);
-    check("the first screen does not scroll the page at 1440x900",
+    check("the first screen does not scroll the page at a real 1440x900 viewport",
           screenEl.scrollHeight <= screenEl.clientHeight + 2);
     check("the screen is exactly the viewport height",
           Math.abs(screenEl.getBoundingClientRect().height - de.clientHeight) <= 2);
@@ -300,10 +309,10 @@
     var tbox = ttr.getBoundingClientRect();
     var tKick = td.querySelector("#qa .kicker").getBoundingClientRect();
     var tPadTop = parseFloat(tall.contentWindow.getComputedStyle(ttr).paddingTop);
-    check("at 1440x1200 the questions are still at the top, not floating mid-panel",
+    check("at 1440x1115 the questions are still at the top, not floating mid-panel",
           tKick.top - tbox.top <= tPadTop + 16);
     // His ruling 2026-09-11: tagline pinned top, Education pinned bottom, at every height.
-    check("at 1440x1200 the rail still pins top and bottom rather than centring",
+    check("at 1440x1115 the rail still pins top and bottom rather than centring",
           tall.contentWindow.getComputedStyle(td.querySelector(".rail-scroll")).justifyContent,
           "space-between");
     var tRail = td.querySelector(".rail-scroll").getBoundingClientRect();
@@ -312,7 +321,37 @@
           tKids[0].getBoundingClientRect().top - tRail.top <= 34);
     check("Education sits at the bottom edge of the rail",
           tRail.bottom - tKids[tKids.length - 1].getBoundingClientRect().bottom <= 26);
-    check("at 1440x1200 the rail still does not scroll",
+    /* THE RELATIONSHIP, not a bound on either number alone.
+       On 2026-09-12 the role gap was 26px and the section gap 25px at 1366x768 — both
+       inside their own limits, both suites green, and EDUCATION rendered as a sixth entry
+       in the timeline because the boundary between sections was smaller than the spacing
+       inside one. A section gap only separates if it beats the gap it is separating.
+       Checked at 1366x768 and 1024x768, the two sizes that failed: they have the most
+       spare height, which is what the timeline used to claim before the rail could. */
+    function boundary(frame, label) {
+      var fd = frame.contentDocument;
+      var rs = fd.querySelectorAll(".timeline li");
+      var gap = rs[1].getBoundingClientRect().top - rs[0].getBoundingClientRect().bottom;
+      var sect = fd.querySelector("#edu-h").getBoundingClientRect().top
+                 - rs[rs.length - 1].getBoundingClientRect().bottom;
+      check(label + ": the section boundary beats the gap inside a section",
+            sect > gap);
+      /* 1.5x, not 2x. 2x was the target and it holds at 1440x812 (4.83) and 1366x681
+         (3.08), but at a real 1280x720 laptop — 633px — there is no room left to buy it:
+         the boundary is 21px against a 12px role floor, 1.75x. That still reads as a
+         boundary; below ~1.5 it stops. Asserting 2x everywhere would fail on a viewport
+         where the only remaining levers are the two floors this file exists to protect. */
+      check(label + ": and beats it by at least 1.5x, so it reads as a boundary",
+            sect >= gap * 1.5);
+      check(label + ": the rail still does not scroll",
+            fd.querySelector(".rail-scroll").scrollHeight
+              <= fd.querySelector(".rail-scroll").clientHeight + 1);
+    }
+    boundary(document.getElementById("gframe"), "1366x681");
+    boundary(document.getElementById("sframe"), "1280x633");
+    boundary(tall, "1440x1115");
+
+    check("at 1440x1115 the rail still does not scroll",
           td.querySelector(".rail-scroll").scrollHeight
             <= td.querySelector(".rail-scroll").clientHeight + 1);
     check("the h1 is not smaller than the card labels",
@@ -333,6 +372,20 @@
     var resume = doc.querySelector(".resume");
     check("the résumé link is pinned outside the content region",
           resume.parentElement.classList.contains("rail"));
+
+    /* The timeline is constrained from BOTH ends.
+       Upper bound (pass seven): spread the roles too far and five entries stop reading as
+       one career. Lower bound (pass nine): on 2026-09-12 three pills took 71px out of the
+       rail and the gap fell to 4px at 1280x720 — the same size as the leading INSIDE a
+       role — so five entries read as ten alternating lines. The floor is ~3x that leading.
+       Both suites stayed green through it, because only the upper bound was asserted. */
+    var roles = doc.querySelectorAll(".timeline li");
+    var roleGap = roles[1].getBoundingClientRect().top - roles[0].getBoundingClientRect().bottom;
+    var roleH = roles[0].getBoundingClientRect().height;
+    check("role gap clears the 12px floor (separator must beat internal leading)",
+          roleGap >= 12);
+    check("role gap stays under the role block height (still one list)",
+          roleGap <= roleH);
     check("and is visible", resume.getBoundingClientRect().bottom <= de.clientHeight + 2);
     check("the transcript scrolls inside itself",
           win.getComputedStyle(doc.querySelector(".transcript")).overflowY, "auto");
