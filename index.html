@@ -158,6 +158,55 @@
           </div>
         </article>
 
+        <article class="qa-item" id="q-first-principles">
+          <h3>How do you design an AI system from first principles?</h3>
+          <div class="answer">
+            <p>I start with the outcome, not the model.</p>
+            <p>I think about an AI product as a system that transforms a goal and a representation of reality into better decisions, actions, and ultimately outcomes. So before I think about agents, prompts, or models, I work through six questions:</p>
+            <p class="chain">Goal &#8594; Governance &#8594; Capability &#8594; State &#8594; Observability &#8594; Feedback</p>
+
+            <h4>1. Goal &mdash; What outcome are we trying to improve?</h4>
+            <p>First, I identify the user&rsquo;s goals and choose the primary goal. That goal becomes the most important constraint on the system. It determines which workflow matters, which decisions are valuable, and what success looks like.</p>
+            <p>For example, in revenue, the goal might not be &ldquo;summarize calls.&rdquo; It might be improving win rate, reducing sales cycle, or helping a seller decide where to focus.</p>
+
+            <h4>2. Governance &mdash; What should the system be allowed to do?</h4>
+            <p>Then I define the system&rsquo;s boundaries: permissions, decision rights, policies, escalation, and where humans need to remain in control.</p>
+            <p>This is particularly important with AI because capability can exceed what we should actually delegate. I want to distinguish between what the system <em>can</em> do and what it <em>should</em> do.</p>
+            <p>That leads naturally to progressive autonomy: the system can start by informing or recommending, then earn the ability to take more action as reliability and trust increase.</p>
+
+            <h4>3. Capability &mdash; What intelligence is actually required?</h4>
+            <p>Only then do I determine what the system needs to be capable of.</p>
+            <p>That might include reasoning, prediction, synthesis, prioritization, planning, recommendation, tool use, or execution. I don&rsquo;t start with &ldquo;Where can I put an LLM?&rdquo; I start with the decision or workflow problem and determine what intelligence is actually necessary.</p>
+
+            <h4>4. State &mdash; What does the system need to know about the world right now?</h4>
+            <p>This is where I define the system&rsquo;s world model. I think about it as:</p>
+            <p class="chain">Context + Memory + State</p>
+            <ul>
+              <li><strong>Context</strong> is the relatively stable background &mdash; who or what something is.</li>
+              <li><strong>Memory</strong> is history &mdash; what happened previously.</li>
+              <li><strong>State</strong> is current reality &mdash; what is true right now.</li>
+            </ul>
+            <p>That distinction matters because the same context and history can produce completely different decisions depending on current state. A good AI system therefore isn&rsquo;t just retrieving information; it&rsquo;s maintaining a representation of the world that is relevant to the decision.</p>
+
+            <h4>5. Observability &mdash; How do we know what the system is doing and whether we can trust it?</h4>
+            <p>For AI systems, observability has to go beyond traditional system health. I want to know:</p>
+            <ul>
+              <li>What did the system see?</li>
+              <li>What did it infer?</li>
+              <li>What evidence supported the inference?</li>
+              <li>What decision did it make?</li>
+              <li>What action did it take?</li>
+              <li>How confident was it?</li>
+              <li>What happened afterward?</li>
+            </ul>
+            <p>That creates the foundation for explainability, evaluation, and trust. Critical calculations can remain deterministic, while inferential components are explicitly evaluated and appropriately gated.</p>
+
+            <h4>6. Feedback &mdash; How does the system get better?</h4>
+            <p>Finally, I design the learning loop.</p>
+            <p>The action produces an outcome. The outcome generates information. That information updates the system&rsquo;s understanding and improves future decisions.</p>
+          </div>
+        </article>
+
         <article class="qa-item" id="q-trust">
           <h3>What drives AI trust and adoption?</h3>
           <div class="answer">

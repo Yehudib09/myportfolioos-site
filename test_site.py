@@ -208,20 +208,26 @@ def main():
     # phone layout painted on top of itself and 106 tests stayed green.
     check("and .stage is explicitly un-flexed there, or the phone layout collapses",
           bool(re.search(r"@media \(max-width: 900px\)\s*\{[^}]*\}?(?:[^@]*?)\.stage \{ flex: none;", css or "", re.S)))
-    check("the try-asking grid is one column (three questions, not six)",
+    check("the try-asking grid is one column",
           "grid-template-columns: minmax(0, 1fr);" in (css or ""))
+    # The long-form answer needs headings, lists and the two formula blocks, and the no-JS
+    # fallback must render them the same way the replayed answer does.
+    for sel in (".turn.ai .bubble h4", ".qa-item .answer h4",
+                ".turn.ai .bubble ul", ".qa-item .answer ul",
+                ".turn.ai .bubble .chain", ".qa-item .answer .chain"):
+        check(f"styled for both paths: {sel}", sel in (css or ""))
 
     # ---------------------------------------------------------------- 3. answers
     print("\nTHE SIX ANSWERS ARE IN THE MARKUP, NOT ONLY IN JAVASCRIPT\n")
     items = doc.by_class("article", "qa-item")
-    check("three questions are present", len(items), 3)
+    check("four questions are present", len(items), 4)
 
     ids = [r["attrs"].get("id") for r in items]
     check("every question has an id (they are deep-linkable)", all(ids))
     check("the ids are unique", len(set(ids)), len(ids))
 
     blocks = re.findall(r'<article class="qa-item" id="([^"]+)">(.*?)</article>', index, re.S)
-    check("each question block was matched for content", len(blocks), 3)
+    check("each question block was matched for content", len(blocks), 4)
     for qid, body in blocks:
         h3 = re.search(r"<h3>(.*?)</h3>", body, re.S)
         ans = re.search(r'<div class="answer">(.*?)</div>\s*$', body.strip(), re.S)

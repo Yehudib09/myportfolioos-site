@@ -386,6 +386,52 @@ hr { border: 0; height: 1px; background: var(--line); margin: 0; }
 .turn.ai .bubble p { margin: 0 0 14px; font-size: 17px; line-height: 1.65; text-wrap: pretty; }
 .turn.ai .bubble p:last-child { margin-bottom: 0; }
 
+/* Long-form answer structure. The first-principles answer has six sections, two lists
+   and two formulas; the other three are plain paragraphs and are unaffected by these
+   rules. Styled on `.turn.ai .bubble` and `.qa-item .answer` together so the no-JS
+   fallback renders identically to the replayed version. */
+.turn.ai .bubble h4,
+.qa-item .answer h4 {
+  margin: 26px 0 10px;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.35;
+}
+.turn.ai .bubble h4:first-child,
+.qa-item .answer h4:first-child { margin-top: 0; }
+
+.turn.ai .bubble ul,
+.qa-item .answer ul {
+  margin: 0 0 14px;
+  padding-left: 20px;
+}
+.turn.ai .bubble li,
+.qa-item .answer li {
+  font-size: 17px;
+  line-height: 1.6;
+  margin-bottom: 6px;
+  text-wrap: pretty;
+}
+.turn.ai .bubble li:last-child,
+.qa-item .answer li:last-child { margin-bottom: 0; }
+
+/* The two formulas — "Goal → Governance → …" and "Context + Memory + State". Mono and
+   accented so they read as the spine of the argument rather than as another sentence. */
+.turn.ai .bubble .chain,
+.qa-item .answer .chain {
+  font-family: var(--mono);
+  font-size: 13.5px;
+  line-height: 1.6;
+  letter-spacing: 0.02em;
+  color: var(--accent);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 14px;
+  margin: 0 0 16px;
+}
+
 /* ---------------------------------------------------------------- try asking */
 
 .qa { margin-top: 6px; }
