@@ -141,8 +141,34 @@ def main():
     check("the canonical points at the apex domain",
           canon[0]["attrs"].get("href") if canon else None, "https://myportfolioos.com/")
 
-    for prop in ("og:type", "og:url", "og:title", "og:description"):
+    for prop in ("og:type", "og:url", "og:title", "og:description",
+                 "og:image", "og:image:width", "og:image:height", "og:image:alt"):
         check(f"{prop} is set", len(doc.find("meta", property=prop)), 1)
+
+    # twitter:card promises a large image. Declaring it without og:image renders a big
+    # EMPTY card wherever the link is pasted — worse than a small one, because the space
+    # is reserved and blank. The card is the first thing a recruiter sees.
+    card = doc.find("meta", name="twitter:card")
+    if card and card[0]["attrs"].get("content") == "summary_large_image":
+        check("a large twitter card is backed by a real image",
+              len(doc.find("meta", name="twitter:image")), 1)
+    ogimg = os.path.join(HERE, "assets", "og-image.png")
+    check("the preview image exists", os.path.exists(ogimg))
+    if os.path.exists(ogimg):
+        import struct
+        with open(ogimg, "rb") as f:
+            head = f.read(24)
+        w, h = struct.unpack(">II", head[16:24])
+        check(f"it is 1200x630 ({w}x{h})", (w, h), (1200, 630))
+        check("its source template is committed so it can be regenerated",
+              os.path.exists(os.path.join(HERE, "assets", "og-image.html")))
+
+    # Must be in the BODY. It was already in the JSON-LD, which no human reads.
+    body = index.split("<body>", 1)[1] if "<body>" in index else ""
+    check("his location is visible to a human, not only in the JSON-LD",
+          "Pembroke Pines, FL" in body)
+    check("the page says who wrote the answers",
+          "Answers written by Yehudi" in index)
 
     check("html has a lang attribute", doc.find("html")[0]["attrs"].get("lang"), "en")
     check("a viewport meta exists", len(doc.find("meta", name="viewport")), 1)
