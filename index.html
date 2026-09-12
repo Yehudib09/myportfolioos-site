@@ -207,6 +207,17 @@
           </div>
         </article>
 
+        <article class="qa-item" id="q-spectrum">
+          <h3>How do you decide when a system should be deterministic, AI-assisted, or agentic?</h3>
+          <div class="answer">
+            <p>I think about it as a spectrum of intelligence and autonomy, based on what the workflow actually requires.</p>
+            <p><strong>Deterministic systems</strong> work best when the logic is well understood and precision matters. At HubSpot, for example, Guided Selling used deterministic rules to translate known signals into specific recommended actions&mdash;for example, when a deal stage changes to &ldquo;Negotiation,&rdquo; recommend &ldquo;Draft Contract.&rdquo;</p>
+            <p><strong>AI-assisted systems</strong> are useful when the problem requires intelligence and/or action, but the system needs defined boundaries. With Topic Explorer, I built a conversation-intelligence capability that helped teams understand which topics and conversation patterns were associated with won versus lost deals. We defined the analytical questions and structure upfront, then used an LLM to synthesize and reason over the conversation data within those boundaries.</p>
+            <p><strong>Agentic systems</strong> become useful when intelligence needs to be connected to action. For example, if a deal enters negotiation, an agent could understand the deal context, determine what contract is appropriate, draft it, route it for approval, and coordinate the next steps. The system isn&rsquo;t just recommending an action&mdash;it is acting toward a goal.</p>
+            <p>This is the right treatment when the workflow requires dynamic reasoning across multiple steps and systems, rather than simply applying a rule or generating an insight. The agent can own the bounded responsibility of moving the contract process forward while governance defines what it is allowed to do and when a human needs to intervene.</p>
+          </div>
+        </article>
+
         <article class="qa-item" id="q-trust">
           <h3>What drives AI trust and adoption?</h3>
           <div class="answer">

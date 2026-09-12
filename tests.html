@@ -127,7 +127,7 @@
 
     check("the page still fits one viewport",
           d.querySelector(".screen").scrollHeight <= d.querySelector(".screen").clientHeight + 2);
-    check("all four cards render", cards.length, 4);
+    check("all five cards render", cards.length, 5);
     check("no card is clipped by the transcript",
           Array.prototype.every.call(cards, function (b) {
             return b.getBoundingClientRect().bottom <= tr.getBoundingClientRect().bottom + 1;
@@ -226,9 +226,9 @@
     /* ---------------------------------------------------- enhancement */
     group("Progressive enhancement");
     check("site.js exposed its test surface", !!S);
-    check("four questions were lifted out of the markup", S.questions.length, 4);
+    check("five questions were lifted out of the markup", S.questions.length, 5);
     check("the card grid replaced the plain Q&A list", !!grid);
-    check("four cards rendered", grid ? grid.querySelectorAll(".ask").length : 0, 4);
+    check("five cards rendered", grid ? grid.querySelectorAll(".ask").length : 0, 5);
     check("the raw .qa-item blocks are gone after enhancement",
           doc.querySelectorAll(".qa-item").length, 0);
     check("every card is a real <button> (keyboard reachable)",
@@ -318,7 +318,7 @@
     check("the h1 is not smaller than the card labels",
           parseFloat(win.getComputedStyle(doc.querySelector(".lede")).fontSize)
             >= parseFloat(win.getComputedStyle(doc.querySelector(".ask")).fontSize));
-    check("all four cards are visible without scrolling",
+    check("all five cards are visible without scrolling",
           Array.prototype.every.call(doc.querySelectorAll(".ask"), function (b) {
             return b.getBoundingClientRect().bottom <= de.clientHeight;
           }));
