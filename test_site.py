@@ -163,12 +163,13 @@ def main():
         check("its source template is committed so it can be regenerated",
               os.path.exists(os.path.join(HERE, "assets", "og-image.html")))
 
-    # Must be in the BODY. It was already in the JSON-LD, which no human reads.
+    # Neither of these is on the page. Both were added un-asked on 2026-09-12 and reverted
+    # the same day. They remain open questions for him, not requirements — asserted ABSENT
+    # so they cannot reappear without a deliberate edit here.
     body = index.split("<body>", 1)[1] if "<body>" in index else ""
-    check("his location is visible to a human, not only in the JSON-LD",
-          "Pembroke Pines, FL" in body)
-    check("the page says who wrote the answers",
-          "Answers written by Yehudi" in index)
+    check("no location in the body — his ruling pending", "Pembroke Pines" in body, False)
+    check("no answer-provenance line — his ruling pending",
+          "Answers written by Yehudi" in index, False)
 
     check("html has a lang attribute", doc.find("html")[0]["attrs"].get("lang"), "en")
     check("a viewport meta exists", len(doc.find("meta", name="viewport")), 1)
