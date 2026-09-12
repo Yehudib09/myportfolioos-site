@@ -220,14 +220,14 @@ def main():
     # ---------------------------------------------------------------- 3. answers
     print("\nTHE SIX ANSWERS ARE IN THE MARKUP, NOT ONLY IN JAVASCRIPT\n")
     items = doc.by_class("article", "qa-item")
-    check("five questions are present", len(items), 5)
+    check("six questions are present", len(items), 6)
 
     ids = [r["attrs"].get("id") for r in items]
     check("every question has an id (they are deep-linkable)", all(ids))
     check("the ids are unique", len(set(ids)), len(ids))
 
     blocks = re.findall(r'<article class="qa-item" id="([^"]+)">(.*?)</article>', index, re.S)
-    check("each question block was matched for content", len(blocks), 5)
+    check("each question block was matched for content", len(blocks), 6)
     for qid, body in blocks:
         h3 = re.search(r"<h3>(.*?)</h3>", body, re.S)
         ans = re.search(r'<div class="answer">(.*?)</div>\s*$', body.strip(), re.S)
